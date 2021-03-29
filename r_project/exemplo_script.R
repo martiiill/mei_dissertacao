@@ -1,19 +1,59 @@
-
+#libs
 install.packages("tidyverse")
+install.packages("suncalc")
 library(tidyverse)
+library(lubridate)
+library(suncalc)
 
-ny_1 <- read.csv("datasets/1minute_data_newyork/1minute_data_newyork.csv")
+# utils
+gc()
+
+#My DataSet
+newyork <- read.csv("1minute_data_newyork.csv")
+
+################################################################################
+#Casas com paines solares
+subset_homes_with_solar <- subset(newyork, solar > 0 | solar2 > 0)
+#ds_homes_with_solar<- data.frame(subset_homes_with_solar)
+nrow(subset_homes_with_solar)
+
+#Casas sem paines solares
+homes_with_no_solar <- subset(newyork, is.na(solar) & is.na(solar2))
+#ds_homes_with_no_solar<- data.frame(homes_with_no_solar)
+nrow(homes_with_no_solar)
+
+#Conclusão: Existem mais casas sem painés solares.
+################################################################################
+
+#Dia de trabalho?
+
+date <- as.character(newyork$localminute)
+date <- as.POSIXct(date, format="%Y-%m-%d")
+consumo_data <- aggregate(grid ~ date, data = newyork, FUN="mean")
+
+ggplot(consumo_data, aes(date, grid, color=weekdays(date) %in% c("saturday","sunday")))+geom_point() +
+  ggtitle('Consumo energético') +
+  xlab('Data') +
+  ylab('Consumo') + 
+  scale_color_discrete(name="É Fim de Semana?") 
++geom_line()
+#é sempre segunda-feira? Hum.... estranho. Pode-se dizer que o consumo aumentou a partir de Out. Regreso á rotina?
+
+
+##Tempo de sol no dia -> TODO
+temp <- getSunlightTimes(date = seq.Date(Sys.Date()-9, Sys.Date(), by = 1), 
+                 keep = c("sunrise",  "sunset"), 
+                 lat = 50.1, lon = 1.83, tz = "CET")
 
 #filtrar dados de uma casa específica
-d_1 <- ny_1[ny_1$dataid == 558,]
+d_1 <- dataset_pecan_street[dataset_pecan_street$dataid == 558,]
 
 #como se relaciona o consumo do ar condicionado 1 com a energia consumida?
 ggplot(data = d_1) + 
-  geom_point(mapping = aes(x = air1, y = grid))
+ geom_point(mapping = aes(x = air1, y = grid))
 
 #qual a correlação entre estas variáveis?
 cor(d_1$air1, d_1$grid)
-
 
 #Consumo médio da casa ao longo do dia
 d_1$date <- as.character(d_1$localminute)
@@ -22,18 +62,18 @@ d_1$hour <- as.numeric(format(d_1$date, format = "%H"))
 consumo_hora1 <- aggregate(grid ~ hour, data = d_1, FUN="mean")
 
 ggplot(data=consumo_hora1, aes(x=hour, y=grid, group = 1)) +
-  geom_line()+
-  geom_point()
+ geom_line()+
+ geom_point()
 
 
 #Distribuição do consumo ao longo do dia
-ggplot(data = d_1) + 
-  geom_point(mapping = aes(x = hour, y = grid)) +
-  geom_smooth(mapping = aes(x = hour, y = grid))
+#ggplot(data = d_1) + 
+ # geom_point(mapping = aes(x = hour, y = grid)) +
+  #geom_smooth(mapping = aes(x = hour, y = grid))
 
 
 #comparar consumo médio ao longo do dia para duas casas, em que uma delas (Casa 2) tem paineis solares
-d_2 <- ny_1[ny_1$dataid == 5997,]
+d_2 <- dataset_pecan_street[dataset_pecan_street$dataid == 5997,]
 
 d_2$date <- as.character(d_2$localminute)
 d_2$date <- as.POSIXct(d_2$date, format="%Y-%m-%d %H:%M:%S")
