@@ -1,9 +1,11 @@
 #libs
 install.packages("tidyverse")
 install.packages("suncalc")
+install.packages("Holidays")
 library(tidyverse)
 library(lubridate)
 library(suncalc)
+library(Holidays)
 
 # utils
 gc()
@@ -39,11 +41,21 @@ ggplot(consumo_data, aes(date, grid, color=weekdays(date) %in% c("saturday","sun
 +geom_line()
 #é sempre segunda-feira? Hum.... estranho. Pode-se dizer que o consumo aumentou a partir de Out. Regreso á rotina?
 
+allHolidays()
+#É feriado?
+ggplot(consumo_data, aes(date, grid, color=isHoliday(date)))+geom_point() +
+  ggtitle('Consumo energético') +
+  xlab('Data') +
+  ylab('Consumo') + 
+  scale_color_discrete(name="É Feriado?") 
+
 
 ##Tempo de sol no dia -> TODO
-temp <- getSunlightTimes(date = seq.Date(Sys.Date()-9, Sys.Date(), by = 1), 
+date <- as.character(newyork$localminute)
+date <- as.POSIXct(date, format="%Y-%m-%d")
+temp <- getSunlightTimes(date = date, 
                  keep = c("sunrise",  "sunset"), 
-                 lat = 50.1, lon = 1.83, tz = "CET")
+                 lat = 40.7128, lon = 74.0060, tz = "UTC")
 
 #filtrar dados de uma casa específica
 d_1 <- dataset_pecan_street[dataset_pecan_street$dataid == 558,]
