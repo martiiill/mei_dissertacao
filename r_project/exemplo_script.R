@@ -2,10 +2,14 @@
 install.packages("tidyverse")
 install.packages("suncalc")
 install.packages("Holidays")
+install.packages("chron")
 library(tidyverse)
 library(lubridate)
 library(suncalc)
 library(Holidays)
+library(timeDate)
+library(chron)
+
 
 # utils
 gc()
@@ -28,12 +32,12 @@ nrow(homes_with_no_solar)
 ################################################################################
 
 #Dia de trabalho?
-
 date <- as.character(newyork$localminute)
 date <- as.POSIXct(date, format="%Y-%m-%d")
 consumo_data <- aggregate(grid ~ date, data = newyork, FUN="mean")
 
-ggplot(consumo_data, aes(date, grid, color=weekdays(date) %in% c("saturday","sunday")))+geom_point() +
+ggplot(consumo_data, aes(date, grid, color=weekdays(date) %in% c("saturday","sunday")))
++geom_point() +
   ggtitle('Consumo energético') +
   xlab('Data') +
   ylab('Consumo') + 
@@ -41,13 +45,17 @@ ggplot(consumo_data, aes(date, grid, color=weekdays(date) %in% c("saturday","sun
 +geom_line()
 #é sempre segunda-feira? Hum.... estranho. Pode-se dizer que o consumo aumentou a partir de Out. Regreso á rotina?
 
-allHolidays()
 #É feriado?
-ggplot(consumo_data, aes(date, grid, color=isHoliday(date)))+geom_point() +
-  ggtitle('Consumo energético') +
+hlist <- c("USChristmasDay","USGoodFriday","USIndependenceDay","USLaborDay","USNewYearsDay","USThanksgivingDay")       
+myholidays  <- dates(as.character(holiday(2000:2020,hlist)),format="Y-M-D")
+
+ggplot(consumo_data, aes(date, grid, color=is.holiday(date,myholidays)))
++geom_point()
++ ggtitle('Consumo energético') +
   xlab('Data') +
   ylab('Consumo') + 
   scale_color_discrete(name="É Feriado?") 
+#O ser feriado ou não é irrelevante, neste caso. Existem apenas 2 feriados  neste dataset.
 
 
 ##Tempo de sol no dia -> TODO
