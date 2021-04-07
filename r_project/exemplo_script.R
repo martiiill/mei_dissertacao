@@ -9,13 +9,14 @@ library(suncalc)
 library(Holidays)
 library(timeDate)
 library(chron)
+library(ggplot2)
 
 
 # utils
 gc()
 
 #My DataSet
-newyork <- read.csv("1minute_data_newyork.csv")
+newyork <- read.csv("./mei_dissertacao/r_project/datasets/1minute_data_newyork.csv")
 
 ################################################################################
 #Casas com paines solares
@@ -60,10 +61,12 @@ ggplot(consumo_data, aes(date, grid, color=is.holiday(date,myholidays)))
 
 ##Tempo de sol no dia -> TODO
 date <- as.character(newyork$localminute)
-date <- as.POSIXct(date, format="%Y-%m-%d")
+date <- as.Date(date, format="%Y-%m-%d")
 temp <- getSunlightTimes(date = date, 
                  keep = c("sunrise",  "sunset"), 
                  lat = 40.7128, lon = 74.0060, tz = "UTC")
+
+temp
 
 #filtrar dados de uma casa específica
 d_1 <- dataset_pecan_street[dataset_pecan_street$dataid == 558,]
