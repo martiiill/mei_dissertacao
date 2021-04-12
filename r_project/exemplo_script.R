@@ -16,7 +16,36 @@ library(ggplot2)
 gc()
 
 #My DataSet
-newyork <- read.csv("./mei_dissertacao/r_project/datasets/1minute_data_newyork.csv")
+newyork <- read.csv("1minute_data_newyork.csv")
+
+#Metadata
+metadata <- read.csv("metadata.csv")
+
+#Qual a area de casa que gasta mais?
+#casas_existentes_para_relacionar <- newyork[which(newyork$dataid %in% metadata$dataid), "dataid"]
+
+#newyork$existsMetada <- newyork[which(newyork$dataid %in% metadata$dataid), "dataid"]
+
+#sum_air1 <- rowSums(newyork[,c(3)])
+
+#casa_exemplo_metadata <- metadata[metadata$dataid == 5997,]
+#casa_exemplo_newyork <- newyork[newyork$dataid == 5997,]
+
+casa_exemplo_newyork <- newyork[newyork$dataid == 5997,]
+
+newyork$total_consumo <- rowSums(casa_exemplo_newyork[,c(3:31,33:67,77)])
+
+casa_exemplo_newyork$date <- as.character(casa_exemplo_newyork$localminute)
+casa_exemplo_newyork$date <- as.POSIXct(casa_exemplo_newyork$date, format="%Y-%m-%d %H:%M:%S")
+casa_exemplo_newyork$day <- as.numeric(format(casa_exemplo_newyork$date, format = "%d"))
+consumo_hora1 <- aggregate(grid ~ day, data = casa_exemplo_newyork, FUN="mean")
+
+#ggplot(data=consumo_hora1, aes(x=hour, y=grid)) +  geom_line()+  geom_point()
+
+ggplot(data= consumo_hora1) +
+  geom_point(mapping = aes(x = hour, y= grid))
+
+
 
 ################################################################################
 #Casas com paines solares
@@ -96,7 +125,7 @@ ggplot(data=consumo_hora1, aes(x=hour, y=grid, group = 1)) +
 
 
 #comparar consumo médio ao longo do dia para duas casas, em que uma delas (Casa 2) tem paineis solares
-d_2 <- dataset_pecan_street[dataset_pecan_street$dataid == 5997,]
+d_2 <- newyork[newyork$dataid == 5997,]
 
 d_2$date <- as.character(d_2$localminute)
 d_2$date <- as.POSIXct(d_2$date, format="%Y-%m-%d %H:%M:%S")
@@ -119,11 +148,10 @@ ggplot(data=compara_consumo, aes(x=hour, y=consumo, group=casa)) +
 d_2$total_consumo <- rowSums(d_2[,c(3:31,33:67,77)])
 d_2$total_produzido <- d_2$solar + d_2$solar2
 
-consumo_agg <- aggregate(total_consumo ~ hour, data = d_2, FUN = "mean")
+consumo_agg <- aggregate(d_2$total_consumo ~ hour, data = d_2, FUN = "mean")
 producao_agg <- aggregate(total_produzido ~ hour, data = d_2, FUN = "mean")
 compara_prod_consumo <- data.frame(consumo_agg$hour, consumo_agg$total_consumo, producao_agg$total_produzido)
 colnames(compara_prod_consumo) <- c("Hora", "Consumo", "Producao")
-
 
 ggplot(compara_prod_consumo, aes(x=Hora)) + 
   geom_line(aes(y = Consumo), color = "darkred") + 
