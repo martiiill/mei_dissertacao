@@ -3,6 +3,8 @@ install.packages("tidyverse")
 install.packages("suncalc")
 install.packages("Holidays")
 install.packages("chron")
+install.packages("hydroTSM")
+install.packages("reshape")
 library(tidyverse)
 library(lubridate)
 library(suncalc)
@@ -10,7 +12,8 @@ library(Holidays)
 library(timeDate)
 library(chron)
 library(ggplot2)
-
+library(hydroTSM)
+library(reshape)
 
 # utils
 gc()
@@ -21,33 +24,6 @@ newyork <- read.csv("1minute_data_newyork.csv")
 #Metadata
 metadata <- read.csv("metadata.csv")
 
-#Qual a area de casa que gasta mais?
-#casas_existentes_para_relacionar <- newyork[which(newyork$dataid %in% metadata$dataid), "dataid"]
-
-#newyork$existsMetada <- newyork[which(newyork$dataid %in% metadata$dataid), "dataid"]
-
-#sum_air1 <- rowSums(newyork[,c(3)])
-
-#casa_exemplo_metadata <- metadata[metadata$dataid == 5997,]
-#casa_exemplo_newyork <- newyork[newyork$dataid == 5997,]
-
-casa_exemplo_newyork <- newyork[newyork$dataid == 5997,]
-
-newyork$total_consumo <- rowSums(casa_exemplo_newyork[,c(3:31,33:67,77)])
-
-casa_exemplo_newyork$date <- as.character(casa_exemplo_newyork$localminute)
-casa_exemplo_newyork$date <- as.POSIXct(casa_exemplo_newyork$date, format="%Y-%m-%d %H:%M:%S")
-casa_exemplo_newyork$day <- as.numeric(format(casa_exemplo_newyork$date, format = "%d"))
-consumo_hora1 <- aggregate(grid ~ day, data = casa_exemplo_newyork, FUN="mean")
-
-#ggplot(data=consumo_hora1, aes(x=hour, y=grid)) +  geom_line()+  geom_point()
-
-ggplot(data= consumo_hora1) +
-  geom_point(mapping = aes(x = hour, y= grid))
-
-
-
-################################################################################
 #Casas com paines solares
 subset_homes_with_solar <- subset(newyork, solar > 0 | solar2 > 0)
 #ds_homes_with_solar<- data.frame(subset_homes_with_solar)
@@ -57,9 +33,7 @@ nrow(subset_homes_with_solar)
 homes_with_no_solar <- subset(newyork, is.na(solar) & is.na(solar2))
 #ds_homes_with_no_solar<- data.frame(homes_with_no_solar)
 nrow(homes_with_no_solar)
-
 #Conclusão: Existem mais casas sem painés solares.
-################################################################################
 
 #Dia de trabalho?
 date <- as.character(newyork$localminute)
@@ -87,15 +61,23 @@ ggplot(consumo_data, aes(date, grid, color=is.holiday(date,myholidays)))
   scale_color_discrete(name="É Feriado?") 
 #O ser feriado ou não é irrelevante, neste caso. Existem apenas 2 feriados  neste dataset.
 
+#Tempo de sol no dia 
+sunlight_times <- getSunlightTimes(date = as.Date(newyork$localminute, format="%Y-%m-%d"), keep = c("sunrise",  "sunset"), lat = 40.7128, lon = 74.0060, tz = "UTC") #For coordinates of New York
+newyork$horas_Sol <- difftime(sunlight_times$sunset, sunlight_times$sunrise, units="hours")
 
-##Tempo de sol no dia -> TODO
-date <- as.character(newyork$localminute)
-date <- as.Date(date, format="%Y-%m-%d")
-temp <- getSunlightTimes(date = date, 
-                 keep = c("sunrise",  "sunset"), 
-                 lat = 40.7128, lon = 74.0060, tz = "UTC")
+#Que estação do ano é?
+newyork$estacao_ano <- time2season(as.Date(newyork$localminute, format="%Y-%m-%d"), out.fmt = "seasons", type="default")
 
-temp
+#Qual a estação do ano que se gasta mais e que se gasta menos?
+newyork$total_consumo <- rowSums(newyork[ , c(3:31,33:67,77)], na.rm=TRUE)
+consumo_p_estacao_ano <- aggregate(newyork$total_consumo ~ estacao_ano, data = newyork, FUN = "sum")
+consumo_p_estacao_ano
+#A estação que se gasta mais é o Verão. A estação que se gasta menos é a Primavera.
+
+#Variáveis importantes: Mês do Ano
+newyork$mes <- format(as.Date(newyork$localminute, format = "%Y-%m-%d") , "%B")     
+
+#############################################################################################################
 
 #filtrar dados de uma casa específica
 d_1 <- dataset_pecan_street[dataset_pecan_street$dataid == 558,]
