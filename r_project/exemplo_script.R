@@ -5,6 +5,7 @@ install.packages("Holidays")
 install.packages("chron")
 install.packages("hydroTSM")
 install.packages("reshape")
+
 library(tidyverse)
 library(lubridate)
 library(suncalc)
@@ -14,6 +15,10 @@ library(chron)
 library(ggplot2)
 library(hydroTSM)
 library(reshape)
+library(rjson)
+library(rvest)
+library(plyr)
+library(dplyr)
 
 # utils
 gc()
@@ -77,6 +82,63 @@ consumo_p_estacao_ano
 #Variáveis importantes: Mês do Ano
 newyork$mes <- format(as.Date(newyork$localminute, format = "%Y-%m-%d") , "%B")     
 
+
+#Dados Meteorologicos
+history_data <- read.csv("history_data.csv")
+
+for (row in 1:nrow(newyork)) 
+{
+  my_date <- as.Date(newyork[row, c(2)], format="%d/%m/%Y")
+  
+  print(my_date)
+  
+  #Se existem dados meteorologicos
+  if(is.element(my_date,unlist(history_data)))
+  {
+      #obter dados
+  }
+  
+  #month <- as.Date( newyork[row, c(2)], format="%m")
+  #day <- as.Date( newyork[row, c(2)], format="%d")
+
+  # create formatted url with desired dates
+  #url <- sprintf('https://www.timeanddate.com/scripts/cityajax.php?n=usa/newyork&mode=historic&hd=%4d%02d%02d&month=%d&year=%4d&json=1', year, month, day, month, year)
+  
+  
+  #webpage <- read_html(url) %>% html_text()
+  
+  # json string is not formatted the way from JSON function needs so I had to parse it manually
+  
+  # split string on each row
+  #x <- strsplit(webpage, "\\{c:")[[1]]
+  # remove first element (garbage)
+  #x <- x[2:length(x)]
+  # clean last 2 characters in each row
+  #x <- sapply(x, FUN=function(xx){substr(xx[1], 1, nchar(xx[1])-2)}, USE.NAMES = FALSE)
+  
+  # function to get actual data in each row and put it into a dataframe
+  
+  #parse.row <- function(row.string) {
+    # parse columns using '},{' as divider
+   # a <- strsplit(row.string, '\\},\\{')[[1]]
+    # remove some lefover characters from parsing
+    #a <- gsub('\\[\\{|\\}\\]', '', a)
+    # remove what I think is metadata
+    #a <- gsub('h:', '', gsub('s:.*,', '', a))
+    
+    #df <- data.frame(time=a[1], temp=a[3], weather=a[4], wind=a[5], humidity=a[7],
+     #                barometer=a[8])
+    
+    #return(df)
+  #}
+  
+  # use ldply to run function parse.row for each element of x and combine the results in a single dataframe
+  #df.final <- ldply(x, parse.row)
+}
+
+
+
+#head(df.final)
 #############################################################################################################
 
 #filtrar dados de uma casa específica
